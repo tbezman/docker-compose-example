@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  reverse-proxy:
+    image: traefik:v2.0
+    command: traefik --api.insecure=true --providers.docker
+    environment:
+      - exposedByDefault=false
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.http.routers.traefik.rule=Host(`traefik.todo.com`)
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+
+  postgres:
+    image: postgres
+    user: root
+    volumes:
+      - ./postgres:/var/lib/postgres/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=todo
+      - POSTGRES_PASSWORD=todo
+      - POSTGRES_DATABASE=todo
+
+  api:
+    depends_on:
+      - postgres
+      - reverse-proxy
+    volumes:
+      - ./api:/project
+    build:
+      context: .
+      dockerfile: ./build/development/Dockerfile-api
+    labels:
+      - traefik.http.routers.api.rule=Host(`api.todo.com`)
+      - traefik.http.services.api.loadbalancer.server.port=8080
+
+  web:
+    depends_on:
+      - api
+      - reverse-proxy
+    volumes:
+      - ./web:/project
+    build:
+      context: .
+      dockerfile: ./build/development/Dockerfile-web
+    labels:
+      - traefik.http.routers.web.rule=Host(`web.todo.com`)
+      - traefik.http.services.web.loadbalancer.server.port=4000

@@ -1,0 +1,7 @@
+FROM golang:1.15
+
+RUN go get github.com/githubnemo/CompileDaemon
+
+WORKDIR /project
+
+CMD ["bash", "-c", "go get ./...; exec CompileDaemon -command=./api"]

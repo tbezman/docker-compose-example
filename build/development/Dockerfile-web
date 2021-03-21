@@ -1,0 +1,5 @@
+FROM node:14
+
+WORKDIR /project
+
+CMD ["bash", "-c", "yarn && yarn dev -p 4000 -H 0.0.0.0"]
